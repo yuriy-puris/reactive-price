@@ -10,6 +10,7 @@ from .serializers import CategoryLinksSerializer
 class CategoryLinksView(APIView):
 
   def get(self, request, format=None):
+    # CategoryParser().get_category('https://www.moyo.ua/')
     queryset = CategoryLinks.objects.all()
     serializer_class = CategoryLinksSerializer(queryset, many=True)
     return Response(serializer_class.data)
