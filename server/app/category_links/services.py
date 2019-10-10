@@ -3,9 +3,11 @@ import requests
 from bs4 import BeautifulSoup
 from lxml import html
 import lxml.etree
+from apscheduler.schedulers.background import BackgroundScheduler
 
-import sys
-import category_links.models as models
+from .models import CategoryLinks
+
+sched = BackgroundScheduler()
 
 headers = {
   'shop_id_1': {
@@ -24,11 +26,9 @@ headers = {
   }
 }
 
-class CategoryParser:
-  def __init__(self):
-    self.root = []
-    self.category = {}
+BASE_URL_MOYO = 'https://www.moyo.ua/'
 
+class CategoryParser:
   def get_html(self, url):
     response = requests.get(url, headers=headers['shop_id_2'])
     return response.text
@@ -45,13 +45,20 @@ class CategoryParser:
     collection = list_category['nav'].findChild(recursive=False)
     deep_collection = collection.find_all('a', class_='menu-item-lvl3')
     print(deep_collection)
-    # for item in deep_collection:
-    #   category = CategoryLinks(url=item.get('href'), category_value=item.getText(), shop_id="2")
-    #   category.save()
+    for item in deep_collection:
+      category = CategoryLinks(url=item.get('href'), name=item.getText(), shop_id="2")
+      category.save()
 
   def setUp(self):
-    self.get_category('https://www.moyo.ua/')
+    self.get_category(BASE_URL_MOYO)
 
-if __name__ == '__main__':
-  # print(sys.path)
+
+@sched.scheduled_job('interval', minutes=120)
+def updates(): 
+  print('start')
+  CategoryLinks.objects.all().delete()
   CategoryParser().setUp()
+# updates()
+sched.start()
+
+  
