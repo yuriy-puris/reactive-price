@@ -5,7 +5,7 @@ from lxml import html
 import lxml.etree
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from .models import CategoryLinks
+from .models import CategoryLinks, ProductCategoryPages
 
 sched = BackgroundScheduler()
 
@@ -26,39 +26,60 @@ headers = {
   }
 }
 
-BASE_URL_MOYO = 'https://www.moyo.ua/'
+BASE_URL_MOYO = 'https://www.moyo.ua'
 
 class CategoryParser:
-  def get_html(self, url):
-    response = requests.get(url, headers=headers['shop_id_2'])
-    return response.text
 
+  def __init__(self):
+    self.category_links = []
+
+  # CATEGORIES
   def get_category(self, url):
-    html = self.get_html(url)
+    html = self.get_category_html(url)
     soup = BeautifulSoup(html, 'lxml')
     menu = soup.find(id='menu')
     nav = menu.find('ul', class_='lvl1')
     list_category = { 'nav': nav }
-    self.deep_parser(list_category)
+    self.category_deep_parser(list_category)
 
-  def deep_parser(self, list_category):
+  def get_category_html(self, url):
+    response = requests.get(url, headers=headers['shop_id_2'])
+    return response.text
+
+  def category_deep_parser(self, list_category):
     collection = list_category['nav'].findChild(recursive=False)
-    deep_collection = collection.find_all('a', class_='menu-item-lvl3')
-    print(deep_collection)
-    for item in deep_collection:
+    self.category_links = collection.find_all('a', class_='menu-item-lvl3')
+    for item in self.category_links:
+      url_products = BASE_URL_MOYO + item.get('href')
+      if item.get('href'): 
+        print('joined url', url_products)
+        self.get_product_category(url_products)
       category = CategoryLinks(url=item.get('href'), name=item.getText(), shop_id="2")
       category.save()
+
+  #PRODUCTS
+  def get_product_category(self, url):
+    html = self.get_products_html(url)
+    soup = BeautifulSoup(html, 'lxml')
+    container = soup.find(id='goods-list')
+    print(container)
+
+  def get_products_html(url):
+    response = requests.get(url, headers=headers['shop_id_2'])
+    return response
+
 
   def setUp(self):
     self.get_category(BASE_URL_MOYO)
 
 
-@sched.scheduled_job('interval', minutes=120)
+# @sched.scheduled_job('interval', minutes=120)
 def updates(): 
   print('start')
   CategoryLinks.objects.all().delete()
-  CategoryParser().setUp()
-# updates()
-sched.start()
+  s = CategoryParser()
+  s.setUp()
+updates()
+# sched.start()
 
   
