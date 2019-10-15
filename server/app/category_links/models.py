@@ -3,7 +3,7 @@ from django.db import models
 # Create your models here.
 class CategoryLinks(models.Model):
   url = models.CharField(max_length=200)
-  name = models.CharField(max_length=100)
+  name = models.CharField(max_length=150)
   shop_id = models.IntegerField()
 
 class ProductCategoryPages(models.Model):

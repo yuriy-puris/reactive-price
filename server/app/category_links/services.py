@@ -50,23 +50,55 @@ class CategoryParser:
     collection = list_category['nav'].findChild(recursive=False)
     self.category_links = collection.find_all('a', class_='menu-item-lvl3')
     for item in self.category_links:
-      url_products = BASE_URL_MOYO + item.get('href')
-      if item.get('href'): 
-        print('joined url', url_products)
-        self.get_product_category(url_products)
       category = CategoryLinks(url=item.get('href'), name=item.getText(), shop_id="2")
       category.save()
+    self.get_category_url()
+    
+  def get_category_url(self):
+    collection_url = CategoryLinks.objects.order_by('url')
+    _collection_url = dict()
+    for item in collection_url:
+      if item.name not in _collection_url:
+        _collection_url[item.name] = item
+
+    for item in _collection_url.values():
+      if item.url:
+        full_path = BASE_URL_MOYO + item.url
+        self.get_product_category(full_path)
 
   #PRODUCTS
   def get_product_category(self, url):
     html = self.get_products_html(url)
     soup = BeautifulSoup(html, 'lxml')
-    container = soup.find(id='goods-list')
-    print(container)
+    content = soup.find(id='goods-list')
+    self.get_product_category_deep_parser(content, url)
 
-  def get_products_html(url):
+  def get_product_category_deep_parser(self, content, url):
+    cells = content.find_all('section', class_='product-tile_product')
+    products = []
+
+    for cell in cells:
+      attrs = cell.find('figure').attrs
+      img_url = attrs['data-imagesrc']
+      title = cell.find_all('a', class_='gtm-link-product')[0].text.strip()
+      price = cell.find_all('span', class_='product-tile_price-value')
+      if not len(price):
+        price = cell.find_all('span', class_='product-tile_not-available-text')
+      price = price[0].text.strip()
+      print(int(price))
+      product = ProductCategoryPages(
+        url = url,
+        shop_id = 2,
+        img_url = img_url,
+        title = title,
+        price = price
+      )
+      product.save()
+
+
+  def get_products_html(self, url):
     response = requests.get(url, headers=headers['shop_id_2'])
-    return response
+    return response.text
 
 
   def setUp(self):
