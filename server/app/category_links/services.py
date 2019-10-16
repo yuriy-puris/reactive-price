@@ -85,7 +85,6 @@ class CategoryParser:
       if not len(price):
         price = cell.find_all('span', class_='product-tile_not-available-text')
       price = price[0].text.strip()
-      print(int(price))
       product = ProductCategoryPages(
         url = url,
         shop_id = 2,
@@ -111,7 +110,7 @@ def updates():
   CategoryLinks.objects.all().delete()
   s = CategoryParser()
   s.setUp()
-updates()
+# updates()
 # sched.start()
 
   
