@@ -38,6 +38,7 @@ class CategoryParser:
     html = self.get_category_html(url)
     soup = BeautifulSoup(html, 'lxml')
     menu = soup.find(id='menu')
+    print('menu')
     nav = menu.find('ul', class_='lvl1')
     list_category = { 'nav': nav }
     self.category_deep_parser(list_category)
