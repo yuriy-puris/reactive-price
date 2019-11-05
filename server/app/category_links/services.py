@@ -35,6 +35,7 @@ class CategoryParser:
 
   # CATEGORIES
   def get_category(self, url):
+    print('get category')
     html = self.get_category_html(url)
     soup = BeautifulSoup(html, 'lxml')
     menu = soup.find(id='menu')
